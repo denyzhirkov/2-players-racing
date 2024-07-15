@@ -144,7 +144,7 @@
           const length = Math.random() * (MAX_SEGMENT_LENGTH - MIN_SEGMENT_LENGTH) + MIN_SEGMENT_LENGTH;
           const direction = Math.random() < 0.5 ? lastDirection : Math.random() < 0.5 ? 1 : -1;
 
-          angle = direction === 0 ? 0 : direction * (Math.random() * ANGLE_RANGE);
+          angle = direction === 0 ? 0 : direction * (Math.random() * ANGLE_RANGE + (Math.random() > 0.5 ? 0.3 : - 0.3));
 
           x += Math.cos(angle) * length;
           y += Math.sin(angle) * length;
