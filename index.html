@@ -71,6 +71,21 @@
     </div>
 
     <script>
+      // Constants
+      const CANVAS_WIDTH = 800;
+      const CANVAS_HEIGHT = 600;
+      const TRACK_LENGTH_MULTIPLIER = 3;
+      const CAR_WIDTH = 16;
+      const CAR_HEIGHT = 10;
+      const TRACK_WIDTH = 20;
+      const DASH_LENGTH = 20;
+      const START_FINISH_CIRCLE_RADIUS = 15;
+      const ZOOM_STEP = 0.01;
+      const MAX_ZOOM = 1;
+      const INITIAL_ZOOM = 0.3;
+      const COUNTDOWN_START = 3;
+      const COUNTDOWN_INTERVAL = 300;
+
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
       const speed1Slider = document.getElementById("speed1");
@@ -87,58 +102,58 @@
       let countdown = 0;
       let countdownInterval;
 
-      let car1 = {
-        x: 50,
-        y: 300,
-        speed: 2,
-        angle: 0,
-        baseSpeed: 2,
-        slowdownTimer: 0,
-        acceleration: 1,
-        slowdownFactor: 0.1,
-        driftFactor: 0.15,
-      };
-      let car2 = {
-        x: 50,
-        y: 320,
-        speed: 2,
-        angle: 0,
-        baseSpeed: 2,
-        slowdownTimer: 0,
-        acceleration: 0.5,
-        slowdownFactor: 0.2,
-        driftFactor: 0.15,
-      };
+      const CAR_INITIAL_X = 50;
+      const CAR_INITIAL_Y = CANVAS_HEIGHT / 2;
+      const CAR_INITIAL_SPEED = 2;
+
+      function createCar(y, acceleration, slowdownFactor) {
+        return {
+          x: CAR_INITIAL_X,
+          y,
+          speed: CAR_INITIAL_SPEED,
+          angle: 0,
+          baseSpeed: CAR_INITIAL_SPEED,
+          slowdownTimer: 0,
+          acceleration,
+          slowdownFactor,
+          driftFactor: 0.15,
+        };
+      }
+
+      let car1 = createCar(CAR_INITIAL_Y - 10, 1, 0.1);
+      let car2 = createCar(CAR_INITIAL_Y + 10, 0.5, 0.2);
       let gameStarted = false;
       let winner = null;
       let track = [];
       let lastTimestamp = 0;
 
       function generateTrack() {
+        const TRACK_MARGIN = 50;
+        const MIN_SEGMENT_LENGTH = 20;
+        const MAX_SEGMENT_LENGTH = 50;
+        const ANGLE_RANGE = Math.PI / 6;
+
         track = [];
-        let x = 50;
-        let y = canvas.height / 2;
+        let x = CAR_INITIAL_X;
+        let y = CANVAS_HEIGHT / 2;
         let angle = 0;
         let lastDirection = 0;
         track.push({ x, y });
 
-        while (x < canvas.width * 3) {
-          const length = Math.random() * 30 + 20;
-          const direction =
-            Math.random() < 0.7 ? lastDirection : Math.random() < 0.5 ? 1 : -1;
+        while (x < CANVAS_WIDTH * TRACK_LENGTH_MULTIPLIER) {
+          const length = Math.random() * (MAX_SEGMENT_LENGTH - MIN_SEGMENT_LENGTH) + MIN_SEGMENT_LENGTH;
+          const direction = Math.random() < 0.7 ? lastDirection : Math.random() < 0.5 ? 1 : -1;
 
-          angle = direction === 0
-            ? 0
-            : direction * (Math.PI / 6 + (Math.random() * Math.PI) / 6);
+          angle = direction === 0 ? 0 : direction * (Math.random() * ANGLE_RANGE);
 
           x += Math.cos(angle) * length;
           y += Math.sin(angle) * length;
 
-          if (y < 50) {
-            y = 50;
+          if (y < TRACK_MARGIN) {
+            y = TRACK_MARGIN;
             lastDirection = 1;
-          } else if (y > canvas.height - 50) {
-            y = canvas.height - 50;
+          } else if (y > CANVAS_HEIGHT - TRACK_MARGIN) {
+            y = CANVAS_HEIGHT - TRACK_MARGIN;
             lastDirection = -1;
           } else {
             lastDirection = direction;
@@ -147,7 +162,7 @@
           track.push({ x, y });
         }
 
-        track.push({ x: canvas.width * 3 + 50, y: canvas.height / 2 });
+        track.push({ x: CANVAS_WIDTH * TRACK_LENGTH_MULTIPLIER + CAR_INITIAL_X, y: CANVAS_HEIGHT / 2 });
       }
 
       function drawTrack() {
@@ -183,12 +198,12 @@
           track[track.length - 1].y
         );
         ctx.strokeStyle = "#6d706d";
-        ctx.lineWidth = 20;
+        ctx.lineWidth = TRACK_WIDTH;
         ctx.stroke();
 
         // Draw dashed white line
         ctx.beginPath();
-        ctx.setLineDash([20, 20]); // This creates a dashed line pattern: 20px dash, 20px gap
+        ctx.setLineDash([DASH_LENGTH, DASH_LENGTH]);
         ctx.moveTo(track[0].x, track[0].y);
         for (let i = 1; i < track.length - 2; i++) {
           const xc = (track[i].x + track[i + 1].x) / 2;
@@ -204,23 +219,15 @@
         ctx.strokeStyle = "#FFF";
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.setLineDash([]); // Reset to solid line
+        ctx.setLineDash([]);
 
-        // Draw start circle
-        ctx.beginPath();
+        // Draw start and finish circles
         ctx.fillStyle = "#FFF";
-        ctx.arc(track[0].x, track[0].y, 15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw finish circle
         ctx.beginPath();
-        ctx.arc(
-          track[track.length - 1].x,
-          track[track.length - 1].y,
-          15,
-          0,
-          Math.PI * 2
-        );
+        ctx.arc(track[0].x, track[0].y, START_FINISH_CIRCLE_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(track[track.length - 1].x, track[track.length - 1].y, START_FINISH_CIRCLE_RADIUS, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.font = "20px Arial";
@@ -245,7 +252,7 @@
           ctx.translate(car.x - car1.x + 200, car.y);
           ctx.rotate(car.angle);
           ctx.fillStyle = color;
-          ctx.fillRect(-8, -5, 16, 10);
+          ctx.fillRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
           ctx.restore();
         }
       }
@@ -375,8 +382,8 @@
       }
 
       function updateZoom() {
-        if (gameStarted && zoomLevel < 1) {
-          zoomLevel = Math.min(1, zoomLevel + 0.01);
+        if (gameStarted && zoomLevel < MAX_ZOOM) {
+          zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_STEP);
         }
       }
 
@@ -415,43 +422,25 @@
       startButton.addEventListener("click", () => {
         if (!gameStarted) {
           gameStarted = true;
-          zoomLevel = 0.3;
+          zoomLevel = INITIAL_ZOOM;
           isZoomedIn = true;
-          car1 = {
-            x: track[0].x,
-            y: track[0].y - 4,
-            speed: parseFloat(speed1Slider.value),
-            angle: 0,
-            baseSpeed: parseFloat(speed1Slider.value),
-            slowdownTimer: 0,
-            acceleration: 1,
-            slowdownFactor: 0.1,
-            driftFactor: 0.15,
-          };
-          car2 = {
-            x: track[0].x,
-            y: track[0].y + 4,
-            speed: parseFloat(speed2Slider.value),
-            angle: 0,
-            baseSpeed: parseFloat(speed2Slider.value),
-            slowdownTimer: 0,
-            acceleration: 0.5,
-            slowdownFactor: 0.2,
-            driftFactor: 0.15,
-          };
+          car1 = createCar(track[0].y - 4, 1, 0.1);
+          car2 = createCar(track[0].y + 4, 0.5, 0.2);
+          car1.speed = car1.baseSpeed = parseFloat(speed1Slider.value);
+          car2.speed = car2.baseSpeed = parseFloat(speed2Slider.value);
           winner = null;
           startButton.textContent = "Restart";
           speed1Slider.disabled = true;
           speed2Slider.disabled = true;
 
-          countdown = 3;
+          countdown = COUNTDOWN_START;
           countdownInterval = setInterval(() => {
             countdown--;
             if (countdown === 0) {
               clearInterval(countdownInterval);
               gameStarted = true;
             }
-          }, 300);
+          }, COUNTDOWN_INTERVAL);
         } else {
           clearInterval(countdownInterval);
           countdown = 0;
