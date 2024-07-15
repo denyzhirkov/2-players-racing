@@ -476,10 +476,12 @@
           generateTrack();
           gameStarted = false;
           isZoomedIn = false;
+          winner = null; // Reset the winner when restarting
           startButton.textContent = "Start";
           speed1Slider.disabled = false;
           speed2Slider.disabled = false;
         }
+        drawGame(); // Redraw the game immediately to update the view
       });
 
       speed1Slider.addEventListener("input", () => {
