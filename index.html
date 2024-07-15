@@ -410,11 +410,16 @@
           ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          // Draw a colorful banner
+          // Draw a banner with the winner's color
           const bannerHeight = 150;
+          const winnerColor = winner === "Car 1 (Red)" ? "red" : "blue";
+          ctx.fillStyle = winnerColor;
+          ctx.fillRect(0, canvas.height / 2 - bannerHeight / 2, canvas.width, bannerHeight);
+
+          // Add a gradient overlay to make it more visually appealing
           const gradient = ctx.createLinearGradient(0, canvas.height / 2 - bannerHeight / 2, 0, canvas.height / 2 + bannerHeight / 2);
-          gradient.addColorStop(0, "#FFD700");
-          gradient.addColorStop(1, "#FFA500");
+          gradient.addColorStop(0, "rgba(255, 255, 255, 0.7)");
+          gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
           ctx.fillStyle = gradient;
           ctx.fillRect(0, canvas.height / 2 - bannerHeight / 2, canvas.width, bannerHeight);
 
