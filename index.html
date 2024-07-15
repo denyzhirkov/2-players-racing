@@ -127,11 +127,9 @@
           const direction =
             Math.random() < 0.7 ? lastDirection : Math.random() < 0.5 ? 1 : -1;
 
-          if (direction === 0) {
-            angle = 0;
-          } else {
-            angle = direction * (Math.PI / 6 + (Math.random() * Math.PI) / 6);
-          }
+          angle = direction === 0
+            ? 0
+            : direction * (Math.PI / 6 + (Math.random() * Math.PI) / 6);
 
           x += Math.cos(angle) * length;
           y += Math.sin(angle) * length;
@@ -210,8 +208,8 @@
 
         // Draw start circle
         ctx.beginPath();
-        ctx.arc(track[0].x, track[0].y, 15, 0, Math.PI * 2);
         ctx.fillStyle = "#FFF";
+        ctx.arc(track[0].x, track[0].y, 15, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw finish circle
@@ -223,15 +221,15 @@
           0,
           Math.PI * 2
         );
-        ctx.fillStyle = "#FFF";
         ctx.fill();
 
-        ctx.fillStyle = "#FFF";
         ctx.font = "20px Arial";
-        ctx.fillText("START", track[0].x - 30, track[0].y - 20);
+        ctx.fillText(
+          "START",
+          track[0].x - 30,
+          track[0].y - 20
+        );
 
-        ctx.fillStyle = "#FFF";
-        ctx.font = "20px Arial";
         ctx.fillText(
           "FINISH",
           track[track.length - 1].x - 30,
@@ -384,8 +382,7 @@
 
       function drawGame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Заполняем весь canvas зеленым цветом
-        ctx.fillStyle = "#87b080"; // Зеленый цвет, похожий на траву
+        ctx.fillStyle = "#87b080";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         drawTrack();
@@ -395,7 +392,7 @@
           drawCar(car2, "blue");
           if (countdown > 0) {
             ctx.fillStyle = 'black';
-            ctx.font = '64px Arial';
+            ctx.font = '128px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
           }
